@@ -20,6 +20,7 @@ public class FiveInARow {
         waiting(50);
         window.setVisible(true);
     }
+    //Waits i milliseconds or until button click if i = 0
     public static void waiting(int i) {
         wait = true;
         long time = System.currentTimeMillis();
@@ -32,8 +33,10 @@ public class FiveInARow {
             System.arraycopy(board[i], 0, b[i], 0, 10); 
         return b;
     }
+    //Plays a piece at square i if open; works for human and AI
     public static void play(int i) {
         if (board[i / 10][i % 10] == 0) {
+            //Empty square = 0; p1 square = 6; p2 square = 7
             board[i / 10][i % 10] = turn + 6;
             square[i].setBackground(p[turn].color);
             recent = i;
@@ -42,8 +45,9 @@ public class FiveInARow {
     }
     
     public static void main(String[] args) {
+        //Welcome, choose number of players
         GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(1,1,0,0);
+        c.insets = new Insets(1,1,0,0);  c.ipady = 15;
         JFrame settings = new JFrame();
         settings.setTitle("Game Settings");
         settings.setSize(250, 250);
@@ -52,22 +56,26 @@ public class FiveInARow {
         Container stuff = settings.getContentPane();
         stuff.setLayout(new GridBagLayout());
         JLabel welcome = new JLabel("Welcome to Five in a Row!");
-        welcome.setFont(new Font("Serif", 16, 16));
+        welcome.setFont(new Font("Serif", 24, 16));
         stuff.add(welcome, c);
         c.gridy = 1;
+        stuff.add(new JLabel("Object of game: to place 5 tiles in a "
+                + "line"), c);
+        c.gridy = 2;
         stuff.add(new JLabel("How many humans wish to play?"), c);
+        
+        JPanel buttons = new JPanel(new GridBagLayout());
         String[] numbers = {"0", "1", "2"};
         JComboBox numPlayers = new JComboBox(numbers);
         numPlayers.setSelectedIndex(1);
+        c.gridx = 0;  c.gridy = 0;  c.ipady = 1;
+        buttons.add(numPlayers, c);
         JButton next = new JButton();
         next.add(new JLabel("Continue"));
         next.setAction(new Click(-1));
-        JPanel buttons = new JPanel(new GridBagLayout());
-        c.gridx = 0;  c.gridy = 0;  c.ipady = 1;
-        buttons.add(numPlayers, c);
         c.gridx = 1;  c.ipady = 0;
         buttons.add(next, c);
-        c.gridx = 0;  c.gridy = 2;
+        c.gridx = 0;  c.gridy = 3;
         stuff.add(buttons, c);
         settings.setVisible(true);
         waiting(0);
@@ -75,6 +83,7 @@ public class FiveInARow {
         settings.setVisible(false);
         stuff.removeAll();
         
+        //Set up player names and colors
         JButton[] colors = new JButton[4];
         for (int i = 0; i < 4; i++) colors[i] = new JButton();
         colors[0].setBackground(Color.WHITE);
@@ -85,6 +94,7 @@ public class FiveInARow {
             b.setAction(new Click(b.getBackground()));
         for (int i = 0; i < 2; i++) {
             if (i < humans) {
+                //User interface for human player set-up
                 c.gridy = 0;
                 stuff.add(new JLabel("Player " + (i + 1) + 
                         ", enter your name:"), c);
@@ -110,11 +120,13 @@ public class FiveInARow {
                 stuff.removeAll();
             }
             else {
+                //AI generates name and color
                 JButton b = colors[(int)(Math.random() * (4 - i))];
                 couleur = b.getBackground();
                 p[i] = new Player("Al Inaro", couleur, false);
                 if (humans == 0) p[i].name += " " + (i + 1);
             }
+            //Remove chosen color before second player chooses
             if (i == 0)
                 for (int j = 0; j < 4; j++)
                     if (colors[j].getBackground().equals(couleur))
@@ -122,6 +134,7 @@ public class FiveInARow {
                             colors[k] = colors[k + 1];
         }
         
+        //Visual representation of player match-up
         JPanel[] jp = new JPanel[2];
         for (int i = 0; i < 2; i++) {
             c.fill = GridBagConstraints.CENTER;
@@ -151,6 +164,7 @@ public class FiveInARow {
         waiting(0);
         settings.setVisible(false);
         
+        //Main game window
         window = new JFrame();
         window.setTitle("Five In A Row");
         window.setSize(500, 500);
@@ -161,6 +175,7 @@ public class FiveInARow {
         grid.setBackground(Color.DARK_GRAY);
         c.fill = GridBagConstraints.BOTH;  c.ipady = 24;
         
+        //10 x 10 board of tiles
         for (int i = 0; i < 100; i++) {
             square[i] = new JButton();
             square[i].setBackground(new Color(i, i%10*18, 150-i));
@@ -168,6 +183,7 @@ public class FiveInARow {
             c.gridx = i % 10;  c.gridy = i / 10;
             grid.add(square[i], c);
         }
+        //Game report area
         JTextArea text = new JTextArea("Welcome to Five in a Row!\n");
         text.setFont(new Font("Serif", 16, 16));
         text.setBackground(new Color(250, 250, 150));
@@ -185,6 +201,7 @@ public class FiveInARow {
         turn = (int)(2 * Math.random());
         AI al = new AI(boardCopy());
         
+        //Actual game takes place inside this loop
         while(!al.over()) {
             turn = 1 - turn;
             text.append(p[turn].name + "'s move");
@@ -212,6 +229,7 @@ public class FiveInARow {
     }
 }
 
+//Actions for clicking buttons
 class Click extends AbstractAction {
     private final int i;
     private final Color color;
@@ -231,6 +249,7 @@ class Click extends AbstractAction {
     }
 }
 
+//Stores players
 class Player {
     public String name;
     public final Color color;
@@ -242,12 +261,14 @@ class Player {
     }
 }
 
+//AI methods for determining winner and running AI player's moves
 class AI {
     private int[][] board;
     public AI(int[][] b) {board = b;}
     public void set(int[][] b) {board = b;}
-    public int value(int i) {return board[i / 10][i % 10];}
+    private int value(int i) {return board[i / 10][i % 10];}
     
+    //Switch 6's and 7's; used in game between two AIs
     public void invert() {
         for (int i = 0; i < 10; i++)
             for (int j = 0; j < 10; j++)
@@ -255,20 +276,22 @@ class AI {
                     board[i][j] = 13 - board[i][j];
     }
     
-    public boolean fit(int i, int d) {
+    //freq() helper methods
+    private boolean fit(int i, int d) {
         if (d + i % 10 < 10) return true;
         if (d == 40 && i < 60) return true;
         if (d == 44 && i < 60 && i % 10 < 6) return true;
         return (d == 36 && i < 60 && i % 10 > 3);
     }
-    public int total(int i, int d) {
+    private int total(int i, int d) {
         if (!fit(i, d)) return -1;
         int total = 0;
         for (int i2 = i; i2 <= i + d; i2 += d / 4)
             total += value(i2);
         return total;
     }
-    public int freq(int sum) {
+    //Number of groups of five tiles that sum to int sum
+    private int freq(int sum) {
         int freq = 0;
         for (int d = 4; d < 45; d += 4) {
             for (int i = 0; i < 100; i++)
@@ -278,6 +301,7 @@ class AI {
         return freq;
     }
     
+    //For determining wins and ties
     public int winner() {
         if (freq(30) > 0) return 0;
         if (freq(35) > 0) return 1;
@@ -291,12 +315,13 @@ class AI {
         return true;
     }
     
-    public int[] trim(int[] big, int cut) {
+    //Helper methods for best()
+    private int[] trim(int[] big, int cut) {
         int[] small = new int[cut];
         System.arraycopy(big, 0, small, 0, cut);
         return small;
     }
-    public int[] open() {
+    private int[] open() {
         int[] open = new int[100];
         int index = 0;
         for (int i = 0; i < 100; i++)
@@ -306,20 +331,22 @@ class AI {
             }
         return trim(open, index);
     }
-    public AI newAI(int i, int p) {
+    private AI newAI(int i, int p) {
         int[][] insert = new int[10][10];
         for (int i2 = 0; i2 < 100; i2++)
             insert[i2 / 10][i2 % 10] = value(i2);
         if (value(i) == 0) insert[i / 10][i % 10] = p;
         return new AI(insert);
     }
-    public int score(AI test) {
+    //freq(6 * n): line of n opponent tiles; freq(7 * n): n own pieces
+    private int score(AI test) {
         return 24 * (test.freq(28) - freq(28))
             + 12 * (test.freq(21) - freq(21) - test.freq(18) + freq(18))
             + 4 * (test.freq(14) - freq(14) - test.freq(12) + freq(12))
             + test.freq(7) - freq(7) - test.freq(6) + freq(6);
     }
-    public int[] best(int goal) {
+    //Best positions to play in
+    private int[] best(int goal) {
         int[] open = open();
         int[] yes = new int[100];
         int index = 0, max = 0;
@@ -334,7 +361,7 @@ class AI {
                 AI test = newAI(e, 7);
                 max = (int)Math.max(max, score(test));
             }
-        
+        //For each open space, add to the array if add = true
         for (int e : open) {
             boolean add = false;
             AI test = newAI(e, 7);
@@ -353,7 +380,7 @@ class AI {
                         break;
                     }
                 }
-            if (goal == 4) //Play like a boss
+            if (goal == 4) //Play like a boss (regular gameplay)
                 if (score(test) >= max * 8 / 10) add = true;
             if (add) {
                 yes[index] = e;
@@ -363,9 +390,10 @@ class AI {
         return trim(yes, index);
     }
     
-    public int pick(int[] options) {
+    private int pick(int[] options) {
         return options[(int)(Math.random() * options.length)];
     }
+    //Returns int to be played on board
     public int play() {
         int[][] choice = new int[5][];
         boolean b = freq(14) + freq(12) > 5 || freq(21) + freq(18) > 3;
@@ -380,7 +408,7 @@ class AI {
     
     //Following code is for potentially using recursive move prediction
     //However, runtime is too long and above score method is imperfect
-    public double score(int moves, int play) {
+    private double score(int moves, int play) {
         AI test = newAI(play, 7);
         if (test.over()) {
             int winner = test.winner();
@@ -401,7 +429,7 @@ class AI {
             score += score(moves - 1, e);
         return score / plays.length;
     }
-    public int predict (int[] options) {
+    private int predict (int[] options) {
         double best = -1.0;
         int choice = 0;
         for (int e : options) {
