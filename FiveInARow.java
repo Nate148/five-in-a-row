@@ -1,3 +1,8 @@
+//Five In A Row: courtesy of Hunter Software Development, Uninc. 5.23.15
+//Game description: 2 players attempt to place 5 tiles in a row on a
+//  10 x 10 GUI board in any direction. Players may be human or AI. 
+//Index: main() @ 53   Game window @ 197   Game loop @ 241   Click @ 288
+//  Player @ 309   AI @ 321   freq() @ 349   best() @ 405   play() @ 453
 package fiveinarow;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -5,15 +10,16 @@ import javax.swing.*;
 public class FiveInARow {
 
     public  static       Color      couleur;
-    public  static       boolean    wait;
+    public  static       boolean    wait   ;
     public  static       boolean    canPlay;
-    private static       int        turn;
-    private static       int        recent;
-    private static       JFrame     window;
-    private static       JScrollBar bar;
+    public  static       int        style  ;
+    private static       int        turn   ;
+    private static       int        recent ;
+    private static       JScrollBar bar    ;
+    private static final JFrame     window = new JFrame()    ;
     private static final JButton[]  square = new JButton[100];
-    private static final Player[]   p      = new Player[2];
-    private static final int[][]    board  = new int[10][10];
+    private static final Player[]   p      = new Player[2]   ;
+    private static final int[][]    board  = new int[10][10] ;
     
     public static void scrollDown() {
         bar.setValue(bar.getMaximum());
@@ -45,6 +51,9 @@ public class FiveInARow {
     }
     
     public static void main(String[] args) {
+        //Loop for running entire program
+        while (true) {
+        
         //Welcome, choose number of players
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(1,1,0,0);  c.ipady = 15;
@@ -63,7 +72,6 @@ public class FiveInARow {
                 + "line"), c);
         c.gridy = 2;
         stuff.add(new JLabel("How many humans wish to play?"), c);
-        
         JPanel buttons = new JPanel(new GridBagLayout());
         String[] numbers = {"0", "1", "2"};
         JComboBox numPlayers = new JComboBox(numbers);
@@ -134,6 +142,27 @@ public class FiveInARow {
                             colors[k] = colors[k + 1];
         }
         
+        //Choose AI playing style
+        style = 2;
+        if (humans < 2) {
+            c.gridy = 0;
+            stuff.add(new JLabel("Select the AI's style of play"), c);
+            buttons.removeAll();
+            String[] modes = {"Aggressive", "Active", "Defensive"};
+            JComboBox mode = new JComboBox(modes);
+            mode.setSelectedIndex(1);
+            c.gridx = 0;  c.ipady = 1;
+            buttons.add(mode, c);
+            c.gridx = 1;  c.ipady = 0;
+            buttons.add(next, c);
+            c.gridx = 0;  c.gridy = 1;
+            stuff.add(buttons, c);
+            settings.setVisible(true);
+            waiting(0);
+            style = (int) Math.pow(2, mode.getSelectedIndex());
+            stuff.removeAll();
+        }
+        
         //Visual representation of player match-up
         JPanel[] jp = new JPanel[2];
         for (int i = 0; i < 2; i++) {
@@ -165,7 +194,6 @@ public class FiveInARow {
         settings.setVisible(false);
         
         //Main game window
-        window = new JFrame();
         window.setTitle("Five In A Row");
         window.setSize(500, 500);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -173,15 +201,21 @@ public class FiveInARow {
         Container grid = window.getContentPane();
         grid.setLayout(new GridBagLayout());
         grid.setBackground(Color.DARK_GRAY);
-        c.fill = GridBagConstraints.BOTH;  c.ipady = 24;
         
+        //Loop for running games without changing settings
+        while(true) {
+        
+        window.setVisible(true);
+        grid.removeAll();
         //10 x 10 board of tiles
+        c.fill = GridBagConstraints.BOTH;  c.ipadx = 0;  c.ipady = 24;
         for (int i = 0; i < 100; i++) {
             square[i] = new JButton();
             square[i].setBackground(new Color(i, i%10*18, 150-i));
             square[i].setAction(new Click(i));
             c.gridx = i % 10;  c.gridy = i / 10;
             grid.add(square[i], c);
+            board[i / 10][i % 10] = 0;
         }
         //Game report area
         JTextArea text = new JTextArea("Welcome to Five in a Row!\n");
@@ -196,10 +230,12 @@ public class FiveInARow {
         bar.setValue(bar.getMaximum());
         c.gridwidth = 10;  c.ipady = 50;  c.gridx = 0;  c.gridy = 10;
         grid.add(report, c);
+        //Set up initial game variables
         canPlay = false;
         window.setVisible(true);
         turn = (int)(2 * Math.random());
         AI al = new AI(boardCopy());
+        waiting(500);
         
         //Actual game takes place inside this loop
         while(!al.over()) {
@@ -212,7 +248,7 @@ public class FiveInARow {
                 canPlay = false;
             }
             else {
-                waiting(200);
+                if (humans > 0) waiting(200);
                 al.set(boardCopy());
                 if (turn == 0) al.invert();
                 play(al.play());
@@ -222,10 +258,29 @@ public class FiveInARow {
             al.set(boardCopy());
             scrollDown();
         }
-        
+        //End of game
         if (al.winner() >= 0) text.append(p[turn].name + " wins!");
         else text.append("It's a tie!");
         scrollDown();
+        waiting(1000);
+        next.removeAll();
+        next.add(new JLabel("             Play Again"));
+        c.gridy = 11;  c.ipady = 0;  c.gridx = 0;  c.gridwidth = 5;
+        grid.add(next, c);
+        JButton toStart = new JButton();
+        toStart.add(new JLabel("               Settings"));
+        toStart.setAction(new Click(-3));
+        c.gridx = 5;
+        grid.add(toStart, c);
+        window.setVisible(true);
+        waiting(0);
+        grid.removeAll();
+        c.gridx = 0;  c.gridy = 0;  c.gridwidth = 1;
+        window.setVisible(false);
+        if (style == 3) break;
+        
+        }
+        }
     }
 }
 
@@ -243,6 +298,7 @@ class Click extends AbstractAction {
     }
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (i == -3) FiveInARow.style = 3;
         if (i == -2) FiveInARow.couleur = color;
         if (i < 0) FiveInARow.wait = false;
         else if (FiveInARow.canPlay) FiveInARow.play(i);
@@ -267,7 +323,6 @@ class AI {
     public AI(int[][] b) {board = b;}
     public void set(int[][] b) {board = b;}
     private int value(int i) {return board[i / 10][i % 10];}
-    
     //Switch 6's and 7's; used in game between two AIs
     public void invert() {
         for (int i = 0; i < 10; i++)
@@ -338,12 +393,13 @@ class AI {
         if (value(i) == 0) insert[i / 10][i % 10] = p;
         return new AI(insert);
     }
-    //freq(6 * n): line of n opponent tiles; freq(7 * n): n own pieces
+    //freq(6 * n): lines of n opponent tiles; freq(7 * n): n own tiles
     private int score(AI test) {
-        return 24 * (test.freq(28) - freq(28))
-            + 12 * (test.freq(21) - freq(21) - test.freq(18) + freq(18))
-            + 4 * (test.freq(14) - freq(14) - test.freq(12) + freq(12))
-            + test.freq(7) - freq(7) - test.freq(6) + freq(6);
+        int i = FiveInARow.style;
+        return 24 *(test.freq(28)-freq(28))
+            + 12 *(test.freq(21)-freq(21) + i*(freq(18)-test.freq(18)))
+            + 4 *(test.freq(14)-freq(14) + i*(freq(12)-test.freq(12)))
+            + test.freq(7)-freq(7) + i*(freq(6)-test.freq(6));
     }
     //Best positions to play in
     private int[] best(int goal) {
